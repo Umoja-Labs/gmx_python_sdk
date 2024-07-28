@@ -54,7 +54,7 @@ contract_map = {
         },
         "exchangerouter":
         {
-            "contract_address": "0x7C68C7866A64FA2160F78EEaE12217FFbf871fa8",
+            "contract_address": "0x69C527fC77291722b52649E45c838e41be8Bf5d5",
             "abi_path": "contracts/arbitrum/exchangerouter.json"
         },
         "depositvault":
@@ -74,7 +74,7 @@ contract_map = {
         },
         "syntheticsreader":
         {
-            "contract_address": "0xf60becbba223EEA9495Da3f606753867eC10d139",
+            "contract_address": "0x5Ca84c34a381434786738735265b9f3FD814b824",
             "abi_path": "contracts/arbitrum/syntheticsreader.json"
         },
         "syntheticsrouter":
@@ -97,7 +97,7 @@ contract_map = {
         },
         "exchangerouter":
         {
-            "contract_address": "0x79be2F4eC8A4143BaF963206cF133f3710856D0a",
+            "contract_address": "0x3BE24AED1a4CcaDebF2956e02C27a00726D4327d",
             "abi_path": "contracts/avalanche/exchangerouter.json"
         },
         "depositvault":
@@ -117,7 +117,7 @@ contract_map = {
         },
         "syntheticsreader":
         {
-            "contract_address": "0x1D5d64d691FBcD8C80A2FD6A9382dF0fe544cBd8",
+            "contract_address": "0xBAD04dDcc5CC284A86493aFA75D2BEb970C72216",
             "abi_path": "contracts/avalanche/syntheticsreader.json"
         },
         "syntheticsrouter":

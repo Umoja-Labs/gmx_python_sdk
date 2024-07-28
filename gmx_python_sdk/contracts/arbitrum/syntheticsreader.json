@@ -58,6 +58,11 @@
                      },
                      {
                         "internalType":"address",
+                        "name":"cancellationReceiver",
+                        "type":"address"
+                     },
+                     {
+                        "internalType":"address",
                         "name":"callbackContract",
                         "type":"address"
                      },
@@ -137,6 +142,11 @@
                         "internalType":"uint256",
                         "name":"updatedAtBlock",
                         "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"updatedAtTime",
+                        "type":"uint256"
                      }
                   ],
                   "internalType":"struct Order.Numbers",
@@ -158,6 +168,11 @@
                      {
                         "internalType":"bool",
                         "name":"isFrozen",
+                        "type":"bool"
+                     },
+                     {
+                        "internalType":"bool",
+                        "name":"autoCancel",
                         "type":"bool"
                      }
                   ],
@@ -328,6 +343,16 @@
                            {
                               "internalType":"uint256",
                               "name":"decreasedAtBlock",
+                              "type":"uint256"
+                           },
+                           {
+                              "internalType":"uint256",
+                              "name":"increasedAtTime",
+                              "type":"uint256"
+                           },
+                           {
+                              "internalType":"uint256",
+                              "name":"decreasedAtTime",
                               "type":"uint256"
                            }
                         ],
@@ -695,6 +720,16 @@
                         "internalType":"uint256",
                         "name":"decreasedAtBlock",
                         "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"increasedAtTime",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"decreasedAtTime",
+                        "type":"uint256"
                      }
                   ],
                   "internalType":"struct Position.Numbers",
@@ -917,6 +952,11 @@
                      },
                      {
                         "internalType":"uint256",
+                        "name":"updatedAtTime",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
                         "name":"executionFee",
                         "type":"uint256"
                      },
@@ -1057,6 +1097,16 @@
             "internalType":"address",
             "name":"uiFeeReceiver",
             "type":"address"
+         },
+         {
+            "internalType":"enum ISwapPricingUtils.SwapPricingType",
+            "name":"swapPricingType",
+            "type":"uint8"
+         },
+         {
+            "internalType":"bool",
+            "name":"includeVirtualInventoryImpact",
+            "type":"bool"
          }
       ],
       "name":"getDepositAmountOut",
@@ -2319,6 +2369,11 @@
                      },
                      {
                         "internalType":"address",
+                        "name":"cancellationReceiver",
+                        "type":"address"
+                     },
+                     {
+                        "internalType":"address",
                         "name":"callbackContract",
                         "type":"address"
                      },
@@ -2398,6 +2453,11 @@
                         "internalType":"uint256",
                         "name":"updatedAtBlock",
                         "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"updatedAtTime",
+                        "type":"uint256"
                      }
                   ],
                   "internalType":"struct Order.Numbers",
@@ -2419,6 +2479,11 @@
                      {
                         "internalType":"bool",
                         "name":"isFrozen",
+                        "type":"bool"
+                     },
+                     {
+                        "internalType":"bool",
+                        "name":"autoCancel",
                         "type":"bool"
                      }
                   ],
@@ -2685,6 +2750,16 @@
                         "internalType":"uint256",
                         "name":"decreasedAtBlock",
                         "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"increasedAtTime",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"decreasedAtTime",
+                        "type":"uint256"
                      }
                   ],
                   "internalType":"struct Position.Numbers",
@@ -2876,6 +2951,16 @@
                            {
                               "internalType":"uint256",
                               "name":"decreasedAtBlock",
+                              "type":"uint256"
+                           },
+                           {
+                              "internalType":"uint256",
+                              "name":"increasedAtTime",
+                              "type":"uint256"
+                           },
+                           {
+                              "internalType":"uint256",
+                              "name":"decreasedAtTime",
                               "type":"uint256"
                            }
                         ],
@@ -3280,6 +3365,101 @@
             "type":"address"
          },
          {
+            "internalType":"bytes32",
+            "name":"key",
+            "type":"bytes32"
+         }
+      ],
+      "name":"getShift",
+      "outputs":[
+         {
+            "components":[
+               {
+                  "components":[
+                     {
+                        "internalType":"address",
+                        "name":"account",
+                        "type":"address"
+                     },
+                     {
+                        "internalType":"address",
+                        "name":"receiver",
+                        "type":"address"
+                     },
+                     {
+                        "internalType":"address",
+                        "name":"callbackContract",
+                        "type":"address"
+                     },
+                     {
+                        "internalType":"address",
+                        "name":"uiFeeReceiver",
+                        "type":"address"
+                     },
+                     {
+                        "internalType":"address",
+                        "name":"fromMarket",
+                        "type":"address"
+                     },
+                     {
+                        "internalType":"address",
+                        "name":"toMarket",
+                        "type":"address"
+                     }
+                  ],
+                  "internalType":"struct Shift.Addresses",
+                  "name":"addresses",
+                  "type":"tuple"
+               },
+               {
+                  "components":[
+                     {
+                        "internalType":"uint256",
+                        "name":"marketTokenAmount",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"minMarketTokens",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"updatedAtTime",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"executionFee",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"callbackGasLimit",
+                        "type":"uint256"
+                     }
+                  ],
+                  "internalType":"struct Shift.Numbers",
+                  "name":"numbers",
+                  "type":"tuple"
+               }
+            ],
+            "internalType":"struct Shift.Props",
+            "name":"",
+            "type":"tuple"
+         }
+      ],
+      "stateMutability":"view",
+      "type":"function"
+   },
+   {
+      "inputs":[
+         {
+            "internalType":"contract DataStore",
+            "name":"dataStore",
+            "type":"address"
+         },
+         {
             "components":[
                {
                   "internalType":"address",
@@ -3506,6 +3686,11 @@
             "internalType":"int256",
             "name":"",
             "type":"int256"
+         },
+         {
+            "internalType":"int256",
+            "name":"",
+            "type":"int256"
          }
       ],
       "stateMutability":"view",
@@ -3590,6 +3775,11 @@
                      {
                         "internalType":"uint256",
                         "name":"updatedAtBlock",
+                        "type":"uint256"
+                     },
+                     {
+                        "internalType":"uint256",
+                        "name":"updatedAtTime",
                         "type":"uint256"
                      },
                      {
@@ -3729,6 +3919,11 @@
             "internalType":"address",
             "name":"uiFeeReceiver",
             "type":"address"
+         },
+         {
+            "internalType":"enum ISwapPricingUtils.SwapPricingType",
+            "name":"swapPricingType",
+            "type":"uint8"
          }
       ],
       "name":"getWithdrawalAmountOut",

@@ -22,7 +22,8 @@ class Order:
         self, config: str, market_key: str, collateral_address: str,
         index_token_address: str, is_long: bool, size_delta: float,
         initial_collateral_delta_amount: str, slippage_percent: float,
-        swap_path: list, max_fee_per_gas: int = None, debug_mode: bool = False
+        swap_path: list, max_fee_per_gas: int = None, auto_cancel: bool = False,
+        debug_mode: bool = False
     ) -> None:
 
         self.config = config
@@ -36,6 +37,7 @@ class Order:
         self.swap_path = swap_path
         self.max_fee_per_gas = max_fee_per_gas
         self.debug_mode = debug_mode
+        self.auto_cancel = auto_cancel
 
         if self.max_fee_per_gas is None:
             block = create_connection(
@@ -330,6 +332,9 @@ class Order:
             self.config,
             user_wallet_address
         )
+
+        cancellation_receiver = user_wallet_address
+
         eth_zero_address = convert_to_checksum_address(
             self.config,
             eth_zero_address
@@ -343,9 +348,12 @@ class Order:
             self.collateral_address
         )
 
+        auto_cancel = self.auto_cancel
+
         arguments = (
             (
                 user_wallet_address,
+                cancellation_receiver,
                 eth_zero_address,
                 ui_ref_address,
                 gmx_market_address,
@@ -365,6 +373,7 @@ class Order:
             decrease_position_swap_type,
             self.is_long,
             should_unwrap_native_token,
+            auto_cancel,
             referral_code
         )
 
