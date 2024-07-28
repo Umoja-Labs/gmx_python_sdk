@@ -41,7 +41,7 @@ class GetOpenPositions(GetData):
         if len(raw_positions) == 0:
             logging.info(
                 'No positions open for address: "{}"" on {}.'.format(
-                    address,
+                    self.address,
                     self.config.chain.title()
                 )
             )
