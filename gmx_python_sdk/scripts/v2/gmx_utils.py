@@ -139,6 +139,7 @@ class ConfigManager:
         self.user_wallet_address = None
         self.private_key = None
         self.tg_bot_token = None
+        self.markets_of_interest = None
 
     def set_config(self, filepath: str = os.path.join(base_dir, "config.yaml")):
 
@@ -158,6 +159,9 @@ class ConfigManager:
 
     def set_wallet_address(self, value):
         self.user_wallet_address = value
+
+    def set_market_of_interest(self, value):
+        self.markets_of_interest = value
 
     def set_private_key(self, value):
         self.private_key = value

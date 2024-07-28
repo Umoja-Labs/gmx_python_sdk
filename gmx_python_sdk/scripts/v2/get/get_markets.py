@@ -83,6 +83,9 @@ class Markets:
 
         decoded_markets = {}
         for raw_market in raw_markets:
+            #  only process interested markets if configured
+            if self.config.markets_of_interest and raw_market[0] not in self.config.markets_of_interest:
+                continue
             try:
 
                 if not self._check_if_index_token_in_signed_prices_api(
