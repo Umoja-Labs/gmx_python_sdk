@@ -43,14 +43,14 @@ def transform_to_dict(account_positions_list, processed_positions):
             "decreased_at_time": position[1][10],
             "is_long": position[2][0],
             # fees
-            "funding_fee_amount": fees[1][0],
-            "claimable_long_token_amount": fees[1][1],
-            "claimable_short_token_amount": fees[1][2],
+            "funding_fee_amount": fees[1][0] / (10 ** int(ppos['collateral_token_decimals'])),
+            "claimable_long_token_amount": fees[1][1] / (10 ** int(ppos['index_token_decimals'])),
+            "claimable_short_token_amount": fees[1][2] / (10 ** int(ppos['collateral_token_decimals'])),
             "latest_funding_fee_amount_per_size": fees[1][3],
             "latest_long_token_claimable_funding_amount_per_size": fees[1][4],
             "latest_short_token_claimable_funding_amount_per_size": fees[1][5],
             # borrowing fee
-            "borrowing_fee_usd": fees[2][0],
+            "borrowing_fee_usd": fees[2][0] / 10 ** 30,
             "borrowing_fee_amount": fees[2][1],
             "borrowing_fee_receiver_factor": fees[2][2],
             "borrowing_fee_amount_for_fee_receiver": fees[2][3],
@@ -66,9 +66,9 @@ def transform_to_dict(account_positions_list, processed_positions):
             "position_fee_amount": fees[11],
             "total_cost_amount_excluding_funding": fees[12],
             "total_cost_amount": fees[13],
-            "base_pnl_usd": base_pnl_usd,
-            "uncapped_base_pnl_usd": uncapped_base_pnl_usd,
-            "pnl_after_price_impact_usd": pnl_after_price_impact_usd,
+            "base_pnl_usd": base_pnl_usd / 10 ** 30,
+            "uncapped_base_pnl_usd": uncapped_base_pnl_usd / 10 ** 30,
+            "pnl_after_price_impact_usd": pnl_after_price_impact_usd / 10 ** 30,
         }
         position_dict.update(ppos)
         result.append(position_dict)
@@ -206,6 +206,8 @@ class GetOpenPositions(GetData):
             ),
             "collateral_token_address": chain_tokens[raw_position[0][2]]['address'],
             "collateral_token": chain_tokens[raw_position[0][2]]['symbol'],
+            "collateral_token_decimals": chain_tokens[raw_position[0][2]]['decimals'],
+            "index_token_decimals": chain_tokens[market_info['index_token_address']]['decimals'],
             "position_size": raw_position[1][0] / 10**30,
             "size_in_tokens": raw_position[1][1],
             "entry_price": (
