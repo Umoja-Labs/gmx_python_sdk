@@ -16,71 +16,92 @@ def get_position_key(account: str, market_address: str, collateral_address: str,
     return create_hash(['address', 'address', 'address', 'bool'], [account, market_address, collateral_address, is_long]).hex()
 
 
-def transform_to_dict(account_positions_list, processed_positions):
-    result = []
-    for i in range(len(account_positions_list)):
-        pos = account_positions_list[i]
-        ppos = processed_positions[i]
-        # Unpack the components of each position
-        position, fees, executionPriceResult, base_pnl_usd, uncapped_base_pnl_usd, pnl_after_price_impact_usd = pos
-
-        position_dict = {
-            # addresses
-            "account_address": position[0][0],
-            "market_address": position[0][1],
-            "collateral_token_address": position[0][2],
-            # numbers
-            "size_in_usd": position[1][0],
-            "size_in_tokens": position[1][1],
-            "collateral_amount": position[1][2],
-            "borrowing_factor": position[1][3],
-            "funding_fee_amount_per_size": position[1][4],
-            "long_token_claimable_funding_amount_per_size": position[1][5],
-            "short_token_claimable_funding_amount_per_size": position[1][6],
-            "increased_at_block": position[1][7],
-            "decreased_at_block": position[1][8],
-            "increased_at_time": position[1][9],
-            "decreased_at_time": position[1][10],
-            "is_long": position[2][0],
-            # fees
-            "funding_fee_amount": fees[1][0] / (10 ** int(ppos['collateral_token_decimals'])),
-            "claimable_long_token_amount": fees[1][1] / (10 ** int(ppos['index_token_decimals'])),
-            "claimable_short_token_amount": fees[1][2] / (10 ** int(ppos['collateral_token_decimals'])),
-            "latest_funding_fee_amount_per_size": fees[1][3],
-            "latest_long_token_claimable_funding_amount_per_size": fees[1][4],
-            "latest_short_token_claimable_funding_amount_per_size": fees[1][5],
-            # borrowing fee
-            "borrowing_fee_usd": fees[2][0] / 10 ** 30,
-            "borrowing_fee_amount": fees[2][1],
-            "borrowing_fee_receiver_factor": fees[2][2],
-            "borrowing_fee_amount_for_fee_receiver": fees[2][3],
-            # token price
-            "collateral_token_price_min": fees[4][0],
-            "collateral_token_price_max": fees[4][1],
-            "position_fee_factor": fees[5],
-            "protocol_fee_amount": fees[6],
-            "position_fee_receiver_factor": fees[7],
-            "fee_receiver_amount": fees[8],
-            "fee_amount_for_pool": fees[9],
-            "position_fee_amount_for_pool": fees[10],
-            "position_fee_amount": fees[11],
-            "total_cost_amount_excluding_funding": fees[12],
-            "total_cost_amount": fees[13],
-            "base_pnl_usd": base_pnl_usd / 10 ** 30,
-            "uncapped_base_pnl_usd": uncapped_base_pnl_usd / 10 ** 30,
-            "pnl_after_price_impact_usd": pnl_after_price_impact_usd / 10 ** 30,
-        }
-        position_dict.update(ppos)
-        result.append(position_dict)
-    return result
-
-
 class GetOpenPositions(GetData):
     def __init__(self, config: str, address: str, referral_storage_address: str):
         super().__init__(config)
         self.address = convert_to_checksum_address(config, address)
         self.referral_storage_address = str(
             convert_to_checksum_address(config, referral_storage_address))
+
+    def transform_to_dict(self, account_positions_list, processed_positions, market_info):
+        result = []
+        for i in range(len(account_positions_list)):
+            pos = account_positions_list[i]
+            ppos = processed_positions[i]
+            # Unpack the components of each position
+            position, fees, executionPriceResult, base_pnl_usd, uncapped_base_pnl_usd, pnl_after_price_impact_usd = pos
+            print(pos)
+            print("positions", position)
+            print("fees", fees)
+            print('priceResult', executionPriceResult)
+            print("base_pnl_usd", base_pnl_usd / 10 ** 30)
+            print("uncapped_base_pnl_usd", uncapped_base_pnl_usd / 10 ** 30)
+            print("pnl_after_price_impact_usd",
+                  pnl_after_price_impact_usd / 10 ** 30)
+            fundingFeeAmount = - fees[1][0] / \
+                (10 ** int(ppos['collateral_token_decimals']))
+            (price_impact_usd, price_impact_diff_usd,
+             execution_price) = executionPriceResult
+            close_fee_in_usd = float(
+                fees[7]) / float(ppos['inital_collateral_amount_usd']) / 10 ** 30 / 1000
+            close_fee_in_usd = float(
+                fees[5]) * float(ppos['inital_collateral_amount_usd']) / 10 ** 30
+            position_dict = {
+                # addresses
+                "account_address": position[0][0],
+                "market_address": position[0][1],
+                "collateral_token_address": position[0][2],
+                # numbers
+                "size_in_usd": float(position[1][0]) / 10 ** 30,
+                "size_in_tokens": position[1][1],
+                "collateral_amount": position[1][2] / 10 ** int(ppos['collateral_token_decimals']),
+                "borrowing_factor": position[1][3],
+                "funding_fee_amount_per_size": position[1][4],
+                "long_token_claimable_funding_amount_per_size": position[1][5],
+                "short_token_claimable_funding_amount_per_size": position[1][6],
+                "increased_at_block": position[1][7],
+                "decreased_at_block": position[1][8],
+                "increased_at_time": position[1][9],
+                "decreased_at_time": position[1][10],
+                "is_long": position[2][0],
+                # fees
+                "funding_fee_amount": fundingFeeAmount * ppos['collateral_token_price'],
+                "claimable_long_token_amount": fees[1][1] / (10 ** int(ppos['index_token_decimals'])),
+                "claimable_short_token_amount": fees[1][2] / (10 ** int(ppos['short_token_decimals'])),
+                "latest_funding_fee_amount_per_size": fees[1][3],
+                "latest_long_token_claimable_funding_amount_per_size": fees[1][4],
+                "latest_short_token_claimable_funding_amount_per_size": fees[1][5],
+                # borrowing fee
+                "borrowing_fee_usd": - fees[2][0] / 10 ** 30,
+                "borrowing_fee_amount": fees[2][1],
+                "borrowing_fee_receiver_factor": fees[2][2],
+                "borrowing_fee_amount_for_fee_receiver": fees[2][3],
+                # token price
+                "collateral_token_price_min": fees[4][0] / 10 ** 30,
+                "collateral_token_price_max": fees[4][1] / 10 ** 30,
+                "index_token_decimals": ppos['index_token_decimals'],
+                "position_fee_factor": fees[5] / 10 ** 30,
+                "protocol_fee_amount": fees[6],
+                "position_fee_receiver_factor": fees[7],
+                "close_fee_in_usd": close_fee_in_usd,
+                "fee_receiver_amount": fees[8],
+                "fee_amount_for_pool": fees[9],
+                "position_fee_amount_for_pool": fees[10],
+                "position_fee_amount": fees[11],
+                "total_cost_amount_excluding_funding": fees[12] / 10 ** int(ppos['collateral_token_decimals']),
+                "total_cost_amount": fees[13] / 10 ** int(ppos['collateral_token_decimals']),
+                "base_pnl_usd": base_pnl_usd / 10 ** 30,
+                "uncapped_base_pnl_usd": uncapped_base_pnl_usd / 10 ** 30,
+                "pnl_after_price_impact_usd": pnl_after_price_impact_usd / 10 ** 30,
+                "net_value_usd": float(ppos['inital_collateral_amount_usd']) + float(base_pnl_usd) / 10 ** 30 - float(fees[2][0]) / 10 ** 30 + float(fundingFeeAmount) - close_fee_in_usd,
+            }
+            print(333)
+            print(float(ppos['inital_collateral_amount_usd']), float(base_pnl_usd) / 10 **
+                  30, float(fees[2][0]) / 10 ** 30, float(fundingFeeAmount), close_fee_in_usd)
+            position_dict.update(ppos)
+            print(market_info)
+            result.append(position_dict)
+        return result
 
     def get_data(self):
         """
@@ -119,18 +140,21 @@ class GetOpenPositions(GetData):
         for raw_position in raw_positions:
             processed_position = self._get_data_processing(raw_position)
 
-            # TODO - maybe a better way of building the key?
             if processed_position['is_long']:
+
                 direction = 'long'
             else:
                 direction = 'short'
             processed_positions.append(processed_position)
         prices = []
         for position in processed_positions:
+            print(position['short_token_min_price'],
+                  position['short_token_max_price'])
             price = (
                 (position['minPrice'], position['maxPrice']),
                 (position['minPrice'], position['maxPrice']),
-                (position['minPrice'], position['maxPrice'])
+                (position['short_token_min_price'],
+                 position['short_token_max_price'])
             )
             prices.append(price)
         keys = []
@@ -138,9 +162,14 @@ class GetOpenPositions(GetData):
             key = get_position_key(
                 self.address, position['market_address'], position['collateral_token_address'], position['is_long'])
             keys.append(key)
+        print('bbbb', self.data_store_contract_address,
+              self.referral_storage_address, keys, prices, ZERO_ADDRESS)
         positionInfos = self.reader_contract.functions.getAccountPositionInfoList(
             self.data_store_contract_address, self.referral_storage_address, keys, prices, ZERO_ADDRESS).call()
-        return transform_to_dict(positionInfos, processed_positions)
+        print(positionInfos)
+
+        market_info = self.markets.info[raw_position[0][1]]
+        return self.transform_to_dict(positionInfos, processed_positions, market_info)
 
         # key = "{}_{}".format(
         #    processed_position['market_symbol'][0],
@@ -197,6 +226,30 @@ class GetOpenPositions(GetData):
         ) / 10 ** (
             30 - chain_tokens[market_info['index_token_address']]['decimals']
         )
+        short_token_min_price = int(
+            prices[market_info['short_token_address']]['minPriceFull'])
+
+        short_token_max_price = int(
+            prices[market_info['short_token_address']]['maxPriceFull'])
+        collateral_mark_price = np.median(
+            [
+                float(
+                    prices[chain_tokens[raw_position[0][2]]
+                           ['address']]['maxPriceFull']
+                ),
+                float(
+                    prices[chain_tokens[raw_position[0][2]]
+                           ['address']]['minPriceFull']
+                )
+            ]
+        ) / 10 ** (
+            30 - chain_tokens[chain_tokens[raw_position[0][2]]
+                              ['address']]['decimals']
+        )
+        initial_collateral_amount_usd = raw_position[1][2] / \
+            10 ** chain_tokens[raw_position[0][2]
+                               ]['decimals'] * collateral_mark_price
+
         return {
             "account": raw_position[0][0],
             "market": raw_position[0][1],
@@ -207,6 +260,8 @@ class GetOpenPositions(GetData):
             "collateral_token_address": chain_tokens[raw_position[0][2]]['address'],
             "collateral_token": chain_tokens[raw_position[0][2]]['symbol'],
             "collateral_token_decimals": chain_tokens[raw_position[0][2]]['decimals'],
+            "short_token_decimals": market_info['short_token_metadata']['decimals'],
+            "collateral_token_price": collateral_mark_price,
             "index_token_decimals": chain_tokens[market_info['index_token_address']]['decimals'],
             "position_size": raw_position[1][0] / 10**30,
             "size_in_tokens": raw_position[1][1],
@@ -219,11 +274,8 @@ class GetOpenPositions(GetData):
                     ]['decimals']
                 )
             ),
-            "inital_collateral_amount": raw_position[1][2],
-            "inital_collateral_amount_usd": (
-                raw_position[1][2]
-                / 10 ** chain_tokens[raw_position[0][2]]['decimals'],
-            ),
+            "inital_collateral_amount": raw_position[1][2] / 10 ** chain_tokens[raw_position[0][2]]['decimals'],
+            "inital_collateral_amount_usd":  initial_collateral_amount_usd,
             "leverage": leverage,
             "borrowing_factor": raw_position[1][3],
             "funding_fee_amount_per_size": raw_position[1][4],
@@ -239,6 +291,8 @@ class GetOpenPositions(GetData):
             "mark_price": mark_price,
             "maxPrice": int(maxPrice),
             "minPrice": int(minPrice),
+            "short_token_min_price": short_token_min_price,
+            "short_token_max_price": short_token_max_price,
         }
 
 
