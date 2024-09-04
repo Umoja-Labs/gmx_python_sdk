@@ -1,69 +1,103 @@
 import numpy as np
 
-from .get import GetData
 from .get_markets import Markets
 from .get_oracle_prices import OraclePrices
-from ..gmx_utils import get_token_balance_contract, save_json_file_to_datastore
+from ..keys import pool_amount_key
+from ..gmx_utils import (
+    get_datastore_contract, save_json_file_to_datastore,
+    make_timestamped_dataframe, save_csv_to_datastore
+)
 
 
-class GetPoolTVL(GetData):
-    def __init__(self, config):
-        super().__init__(config)
+class GetPoolTVL:
+    def __init__(self, config: str):
+        self.config = config
         self.oracle_prices_dict = OraclePrices(
             chain=config.chain
         ).get_recent_prices
 
-    def get_pool_balances(self, to_json: bool = False):
+    def get_pool_balances(self, to_json: bool = False, to_csv: bool = False):
         """
-        Get the USD balances of each pool and optionally save to json file
+        Call to get the amounts across all pools on a given chain defined in
+        class init. Pass either to_json or to_csv to save locally in datastore
 
         Parameters
         ----------
         to_json : bool, optional
-            to save to json file or not. The default is False.
+            save output to json file. The default is False.
+        to_csv : bool, optional
+            save out to csv file. The default is False.
 
         Returns
         -------
-        pool_tvl_dict : dict
-            dictionary of total USD value per pool.
+        data : dict
+            dictionary of data.
 
         """
         markets = Markets(self.config).get_available_markets()
         pool_tvl_dict = {}
-
         for market in markets:
-            print("\n" + markets[market]['market_symbol'])
+            index_token_address = markets[market]['index_token_address']
+            long_token_metadata = markets[market]['long_token_metadata']
+            short_token_metadata = markets[market]['short_token_metadata']
 
-            long_token_address = markets[market]['long_token_address']
-
-            short_token_address = markets[market]['short_token_address']
             long_token_balance, short_token_balance = self._query_balances(
                 market,
-                long_token_address,
-                short_token_address
+                long_token_metadata,
+                short_token_metadata
             )
+
+            long_precision = 10 ** long_token_metadata['decimals']
+            short_precision = 10 ** short_token_metadata['decimals']
+            long_token_balance = long_token_balance / long_precision
+            short_token_balance = short_token_balance / short_precision
+
+            # If market is synthetic we need to use the long token as the
+            # index token for price
+            # try:
+            #     if markets[market]['market_metadata']['synthetic']:
+            index_token_address = markets[market]['long_token_address']
+            # except KeyError:
+            #     pass
+
             oracle_precision = 10 ** (
                 30 - markets[market]['long_token_metadata']['decimals']
             )
-
             long_usd_balance = self._calculate_usd_value(
+                index_token_address,
                 long_token_balance,
-                long_token_address,
                 oracle_precision
             )
+            short_usd_balance = short_token_balance
 
             dictionary_key = markets[market]['market_symbol']
 
             pool_tvl_dict[dictionary_key] = {
-                'total_tvl': long_usd_balance + short_token_balance,
-                'long_token': markets[market]['long_token_address'],
-                'short_token': markets[market]['short_token_address']
+                "total_tvl": {},
+                "long_token": {},
+                "short_token": {}
             }
 
-            print(
-                "Pool USD Value: ${}".format(
-                    long_usd_balance + short_token_balance
-                )
+            pool_tvl_dict[dictionary_key]['total_tvl'] = (
+                long_usd_balance + short_usd_balance
+            )
+            pool_tvl_dict[dictionary_key]['long_token'] = (
+                markets[market]['long_token_address']
+            )
+            pool_tvl_dict[dictionary_key]['short_token'] = (
+                markets[market]['short_token_address']
+            )
+            pool_tvl_dict[dictionary_key]['long_token_balance'] = (
+                long_token_balance
+            )
+            pool_tvl_dict[dictionary_key]['short_token_balance'] = (
+                short_token_balance
+            )
+            pool_tvl_dict[dictionary_key]['long_token_usd_balance'] = (
+                long_usd_balance
+            )
+            pool_tvl_dict[dictionary_key]['short_token_usd_balance'] = (
+                short_usd_balance
             )
 
         if to_json:
@@ -71,95 +105,105 @@ class GetPoolTVL(GetData):
                 "{}_pool_tvl.json".format(self.config.chain),
                 pool_tvl_dict
             )
+
+        if to_csv:
+            dataframe = make_timestamped_dataframe(pool_tvl_dict['total_tvl'])
+            save_csv_to_datastore(
+                "{}_total_tvl.csv".format(self.config.chain),
+                dataframe
+            )
         else:
             return pool_tvl_dict
 
     def _query_balances(
-        self, market: str, long_token_address: str, short_token_address: str
+        self,
+        market: str,
+        long_token_metadata: dict,
+        short_token_metadata: dict
     ):
         """
-        Get token balance of each pool for a given market and its long and
-        short token addresses
+        For a given GMX market get the balance of long and short tokens from
+        the datastore contract
 
         Parameters
         ----------
         market : str
-            GMX market address.
-        long_token_address : str
-            long token address.
-        short_token_address : str
-            short token address.
+            contract address of the market.
+        long_token_metadata : dict
+            dictionary containing address.
+        short_token_metadata : dict
+            dictionary containing address.
 
         Returns
         -------
-        long_token_balance : float
-            balance of token in adjusted significant figures.
-        short_token_balance : float
-            balance of token in adjusted significant figures.
-
+        long_token_balance : int
+            amount of tokens.
+        short_token_balance : int
+            amount of tokens.
         """
-        long_token_contract = get_token_balance_contract(
-            self.config,
-            long_token_address
+        datastore = get_datastore_contract(self.config)
+        pool_amount_hash_data = pool_amount_key(
+            market,
+            long_token_metadata['address']
         )
-        long_token_balance = long_token_contract.functions.balanceOf(
-            market
-        ).call() / 10 ** long_token_contract.functions.decimals().call()
-        short_token_contract = get_token_balance_contract(
-            self.config,
-            short_token_address
+        long_token_balance = datastore.functions.getUint(
+            pool_amount_hash_data
+        ).call()
+
+        datastore = get_datastore_contract(self.config)
+        pool_amount_hash_data = pool_amount_key(
+            market,
+            short_token_metadata['address']
         )
-        short_token_balance = short_token_contract.functions.balanceOf(
-            market
-        ).call() / 10 ** short_token_contract.functions.decimals().call()
+        short_token_balance = datastore.functions.getUint(
+            pool_amount_hash_data
+        ).call()
 
         return long_token_balance, short_token_balance
 
     def _calculate_usd_value(
-        self, token_balance: float, contract_address: str,
-        oracle_precision: int
+        self,
+        token_address: str,
+        token_balance: int,
+        oracle_precision: int,
     ):
         """
-        For given contract(token) address, calculate the USD value from the
-        input token amount
+        Calculate the USD value from token amounts for a given token address
 
         Parameters
         ----------
-        token_balance : float
+        token_address : str
+            contracta address.
+        token_balance : int
             amount of tokens.
-        contract_address : str
-            address of token.
         oracle_precision : int
-            number of decimals to apply to price output.
+            factor to power 10 to divide price api output.
 
         Returns
         -------
-        token_balance: float
-            usd value of tokens.
-
+        value: float
+            USD value of the token amount.
         """
         try:
             token_price = np.median(
                 [
                     float(
                         self.oracle_prices_dict()[
-                            contract_address
+                            token_address
                         ]['maxPriceFull']
                     ) / oracle_precision,
                     float(
                         self.oracle_prices_dict()[
-                            contract_address
+                            token_address
                         ]['minPriceFull']
                     ) / oracle_precision
                 ]
             )
             return token_price * token_balance
         except KeyError:
-            print("Contract address not known")
             return token_balance
 
 
 if __name__ == "__main__":
     # chain = sys.argv[1]
-    # chain = 'arbitrum'
-    pool_dict = GetPoolTVL(chain='arbitrum').get_data(to_json=False)
+    pool_dict = GetPoolTVL(chain="arbitrum").get_pool_balances(to_csv=True)
