@@ -35,15 +35,8 @@ class GetPoolTVL:
 
         """
         markets = Markets(self.config).get_available_markets()
-        pool_tvl_dict = {
-            "total_tvl": {},
-            "long_token": {},
-            "short_token": {}
-        }
-
+        pool_tvl_dict = {}
         for market in markets:
-            print("\n" + markets[market]['market_symbol'])
-
             index_token_address = markets[market]['index_token_address']
             long_token_metadata = markets[market]['long_token_metadata']
             short_token_metadata = markets[market]['short_token_metadata']
@@ -79,20 +72,32 @@ class GetPoolTVL:
 
             dictionary_key = markets[market]['market_symbol']
 
-            pool_tvl_dict['total_tvl'][dictionary_key] = (
+            pool_tvl_dict[dictionary_key] = {
+                "total_tvl": {},
+                "long_token": {},
+                "short_token": {}
+            }
+
+            pool_tvl_dict[dictionary_key]['total_tvl'] = (
                 long_usd_balance + short_usd_balance
             )
-            pool_tvl_dict['long_token'][dictionary_key] = (
+            pool_tvl_dict[dictionary_key]['long_token'] = (
                 markets[market]['long_token_address']
             )
-            pool_tvl_dict['short_token'][dictionary_key] = (
+            pool_tvl_dict[dictionary_key]['short_token'] = (
                 markets[market]['short_token_address']
             )
-
-            print(
-                "Pool USD Value: ${}".format(
-                    long_usd_balance + short_usd_balance
-                )
+            pool_tvl_dict[dictionary_key]['long_token_balance'] = (
+                long_token_balance
+            )
+            pool_tvl_dict[dictionary_key]['short_token_balance'] = (
+                short_token_balance
+            )
+            pool_tvl_dict[dictionary_key]['long_token_usd_balance'] = (
+                long_usd_balance
+            )
+            pool_tvl_dict[dictionary_key]['short_token_usd_balance'] = (
+                short_usd_balance
             )
 
         if to_json:
