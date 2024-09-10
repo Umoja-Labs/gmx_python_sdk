@@ -18,7 +18,6 @@ base_dir = os.path.abspath(
     os.path.join(current_script_path, '..', '..', '..', '..')
 )
 package_dir = base_dir + '/gmx_python_sdk/'
-print('base_dir', base_dir)
 
 logging.basicConfig(
     format='{asctime} {levelname}: {message}',
@@ -757,11 +756,14 @@ def determine_swap_route(markets: dict, in_token: str, out_token: str):
 
     """
     if in_token == "0xaf88d065e77c8cC2239327C5EDb3A432268e5831":
-        gmx_market_address = find_dictionary_by_key_value(
-            markets,
-            "index_token_address",
-            out_token
-        )['gmx_market_address']
+        if out_token == "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f":
+            gmx_market_address = "0x47c031236e19d024b42f8AE6780E44A573170703"
+        else:
+            gmx_market_address = find_dictionary_by_key_value(
+                markets,
+                "index_token_address",
+                out_token
+            )['gmx_market_address']
     else:
         if in_token == "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f":
             in_token = "0x47904963fc8b2340414262125aF798B9655E58Cd"
