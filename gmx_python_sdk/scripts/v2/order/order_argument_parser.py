@@ -80,7 +80,8 @@ class OrderArgumentParser:
 
         if self.is_increase:
             if self._calculate_initial_collateral_usd() < 2:
-                raise Exception("Position size must be backed by >$2 of collateral!")
+                raise Exception(
+                    "Position size must be backed by >$2 of collateral!")
 
         self._format_size_info()
 
@@ -205,7 +206,8 @@ class OrderArgumentParser:
                 ] = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
                 return
         except KeyError:
-            raise Exception("Collateral Token Address and Symbol not provided!")
+            raise Exception(
+                "Collateral Token Address and Symbol not provided!")
 
         # search the known tokens for a contract address using the user supplied symbol
         collateral_address = self.find_key_by_symbol(
@@ -286,13 +288,11 @@ class OrderArgumentParser:
 
         market_key = self.parameters_dict['market_key']
 
-        if self.parameters_dict['market_key'] == "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f":
-            market_key = "0x47c031236e19d024b42f8AE6780E44A573170703"
-
+        # if self.parameters_dict['market_key'] == "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f":
+        #    market_key = "0x47c031236e19d024b42f8AE6780E44A573170703"
         market = Markets(
             self.config
         ).get_available_markets()[market_key]
-
         # if collateral address doesnt match long or short token address, no bueno
         if collateral_address == market['long_token_address'] or \
                 collateral_address == market['short_token_address']:
@@ -319,7 +319,8 @@ class OrderArgumentParser:
         for key, value in input_dict.items():
             if value.get('symbol') == search_symbol:
                 return key
-        raise Exception('"{}" not a known token for GMX v2!'.format(search_symbol))
+        raise Exception(
+            '"{}" not a known token for GMX v2!'.format(search_symbol))
 
     @staticmethod
     def find_market_key_by_index_address(input_dict: dict, index_token_address: str):
@@ -349,8 +350,11 @@ class OrderArgumentParser:
         """
 
         # Both size_delta_usd and initial_collateral_delta have been suppled, no issue
-        if "size_delta_usd" in self.parameters_dict and \
+        if ("size_delta_usd" in self.parameters_dict or "size_delta" in self.parameters_dict) and \
                 "initial_collateral_delta" in self.parameters_dict:
+            if "size_delta" in self.parameters_dict and "size_delta_usd" not in self.parameters_dict:
+                self.parameters_dict["size_delta_usd"] = self.parameters_dict["size_delta"] * \
+                    self._calculate_initial_index_token_price()
             return self.parameters_dict
 
         # leverage and initial_collateral_delta supplied, we can calculate size_delta_usd if missing
@@ -366,11 +370,18 @@ class OrderArgumentParser:
             return self.parameters_dict
 
         # size_delta_usd and leverage supplied, we can calculate initial_collateral_delta if missing
-        elif "size_delta_usd" in self.parameters_dict and "leverage" in self.parameters_dict and \
+        elif ("size_delta_usd" in self.parameters_dict or "size_delta" in self.parameters_dict) and "leverage" in self.parameters_dict and \
                 "initial_collateral_delta" not in self.parameters_dict:
 
-            collateral_usd = self.parameters_dict["size_delta_usd"] / \
-                self.parameters_dict["leverage"]
+            if "size_delta_usd" in self.parameters_dict:
+                collateral_usd = self.parameters_dict["size_delta_usd"] / \
+                    self.parameters_dict["leverage"]
+            else:
+                index_token_price = self._calculate_initial_index_token_price()
+                collateral_usd = self.parameters_dict["size_delta"] * index_token_price / \
+                    self.parameters_dict["leverage"]
+                self.parameters_dict["size_delta_usd"] = self.parameters_dict["size_delta"] * \
+                    index_token_price
 
             self.parameters_dict[
                 "initial_collateral_delta"
@@ -393,7 +404,8 @@ class OrderArgumentParser:
         """
 
         initial_collateral_delta_amount = self.parameters_dict['initial_collateral_delta']
-        prices = OraclePrices(chain=self.parameters_dict['chain']).get_recent_prices()
+        prices = OraclePrices(
+            chain=self.parameters_dict['chain']).get_recent_prices()
         price = np.median(
             [float(prices[self.parameters_dict["start_token_address"]]['maxPriceFull']),
              float(prices[self.parameters_dict["start_token_address"]]['minPriceFull'])]
@@ -406,6 +418,23 @@ class OrderArgumentParser:
 
         return price * initial_collateral_delta_amount
 
+    def _calculate_initial_index_token_price(self):
+        """
+        Calculate the price of the index token in USD
+        """
+
+        prices = OraclePrices(
+            chain=self.parameters_dict['chain']).get_recent_prices()
+        price = np.median(
+            [float(prices[self.parameters_dict["index_token_address"]]['maxPriceFull']),
+             float(prices[self.parameters_dict["index_token_address"]]['minPriceFull'])])
+        oracle_factor = get_tokens_address_dict(
+            self.parameters_dict['chain']
+        )[self.parameters_dict["index_token_address"]]['decimals'] - 30
+
+        price = price * 10 ** oracle_factor
+        return price
+
     def _calculate_initial_collateral_tokens(self, collateral_usd: float):
         """
         Calculate the amount of tokens collateral from the USD value
@@ -417,7 +446,8 @@ class OrderArgumentParser:
 
         """
 
-        prices = OraclePrices(chain=self.parameters_dict['chain']).get_recent_prices()
+        prices = OraclePrices(
+            chain=self.parameters_dict['chain']).get_recent_prices()
         price = np.median(
             [float(prices[self.parameters_dict["start_token_address"]]['maxPriceFull']),
              float(prices[self.parameters_dict["start_token_address"]]['minPriceFull'])]
@@ -438,8 +468,10 @@ class OrderArgumentParser:
         """
 
         if not self.is_swap:
-
             # All USD numbers need to be 10**30
+            # if 'size_delta' in self.parameters_dict:
+            #    self.parameters_dict["size_delta"] = int(self.parameters_dict["size_delta"] * 10 ** 30)
+            # else:
             self.parameters_dict["size_delta"] = int(
                 self.parameters_dict["size_delta_usd"] * 10**30)
 
