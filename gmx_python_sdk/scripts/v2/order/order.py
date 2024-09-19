@@ -104,6 +104,7 @@ class Order:
             }
         )
 
+        print("is debug mode", self.debug_mode)
         if not self.debug_mode:
             signed_txn = self._connection.eth.account.sign_transaction(
                 raw_txn, self.config.private_key
@@ -115,6 +116,10 @@ class Order:
             self.log.info(
                 "Check status: https://arbiscan.io/tx/{}".format(tx_hash.hex())
             )
+            receipt = self._connection.eth.wait_for_transaction_receipt(
+                tx_hash)
+            if receipt.status != 1:
+                raise Exception("Transaction failed!")
 
             self.log.info("Transaction submitted!")
 
@@ -183,7 +188,7 @@ class Order:
                 self._gas_limits,
                 self._gas_limits_order_type,
                 gas_price
-            )
+            ) / 4
         )
 
         # Dont need to check approval when closing
@@ -296,7 +301,6 @@ class Order:
         if is_swap:
             acceptable_price = 0
             gmx_market_address = "0x0000000000000000000000000000000000000000"
-
         execution_price_and_price_impact_dict = get_execution_price_and_price_impact(
             self.config,
             execution_price_parameters,
@@ -313,20 +317,24 @@ class Order:
             if self.is_long:
                 if execution_price_and_price_impact_dict[
                         'execution_price'] > acceptable_price_in_usd:
-                    raise Exception("Execution price falls outside acceptable price!")
+                    raise Exception(
+                        "Execution price falls outside acceptable price!")
             elif not self.is_long:
                 if execution_price_and_price_impact_dict[
                         'execution_price'] < acceptable_price_in_usd:
-                    raise Exception("Execution price falls outside acceptable price!")
+                    raise Exception(
+                        "Execution price falls outside acceptable price!")
         elif is_close:
             if self.is_long:
                 if execution_price_and_price_impact_dict[
                         'execution_price'] < acceptable_price_in_usd:
-                    raise Exception("Execution price falls outside acceptable price!")
+                    raise Exception(
+                        "Execution price falls outside acceptable price!")
             elif not self.is_long:
                 if execution_price_and_price_impact_dict[
                         'execution_price'] > acceptable_price_in_usd:
-                    raise Exception("Execution price falls outside acceptable price!")
+                    raise Exception(
+                        "Execution price falls outside acceptable price!")
 
         user_wallet_address = convert_to_checksum_address(
             self.config,
@@ -379,8 +387,8 @@ class Order:
 
         # If the collateral is not native token (ie ETH/Arbitrum or AVAX/AVAX)
         # need to send tokens to vault
-
         value_amount = execution_fee
+
         if self.collateral_address != '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' and not is_close:
 
             multicall_args = [
@@ -406,6 +414,7 @@ class Order:
                 HexBytes(self._create_order(arguments))
             ]
 
+        print("submitting transaction")
         self._submit_transaction(
             user_wallet_address, value_amount, multicall_args, self._gas_limits
         )
