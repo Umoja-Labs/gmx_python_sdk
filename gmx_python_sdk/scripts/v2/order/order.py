@@ -188,7 +188,7 @@ class Order:
                 self._gas_limits,
                 self._gas_limits_order_type,
                 gas_price
-            ) / 4
+            )
         )
 
         # Dont need to check approval when closing
