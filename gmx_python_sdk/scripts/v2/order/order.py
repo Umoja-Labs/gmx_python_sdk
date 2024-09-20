@@ -188,7 +188,7 @@ class Order:
                 self._gas_limits,
                 self._gas_limits_order_type,
                 gas_price
-            )
+            ) * 3  # more execution fee just in case of a congestion in the network
         )
 
         # Dont need to check approval when closing
