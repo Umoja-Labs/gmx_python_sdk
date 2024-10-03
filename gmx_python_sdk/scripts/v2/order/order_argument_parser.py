@@ -496,11 +496,11 @@ class OrderArgumentParser:
 
         # TODO - leverage is now a contract parameter and needs to be queried
         max_leverage = 100
-        if leverage_requested > max_leverage:
-            raise Exception('Leverage requested "x{:.2f}" can not exceed x100!'.format(
-                leverage_requested
-            )
-            )
+        # if leverage_requested > max_leverage:
+        #    raise Exception('Leverage requested "x{:.2f}" can not exceed x100!'.format(
+        #        leverage_requested
+        #    )
+        #    )
 
 
 if __name__ == "__main__":
