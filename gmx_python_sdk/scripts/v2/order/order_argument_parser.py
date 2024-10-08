@@ -116,9 +116,6 @@ class OrderArgumentParser:
         try:
             token_symbol = self.parameters_dict['index_token_symbol']
 
-            # Exception for tickers api
-            if token_symbol == "BTC":
-                token_symbol = "WBTC.b"
         except KeyError:
             raise Exception("Index Token Address and Symbol not provided!")
 
