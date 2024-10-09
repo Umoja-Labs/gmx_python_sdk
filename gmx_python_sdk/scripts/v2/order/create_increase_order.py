@@ -15,7 +15,7 @@ class IncreaseOrder(Order):
         )
 
         # Open an order
-        self.order_builder(is_open=True)
+        self.tx_hash = self.order_builder(is_open=True)
 
     def determine_gas_limits(self):
         datastore = get_datastore_contract(self.config)

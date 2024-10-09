@@ -15,7 +15,7 @@ class DecreaseOrder(Order):
         )
 
         # Close an order
-        self.order_builder(is_close=True)
+        self.tx_hash = self.order_builder(is_close=True)
 
     def determine_gas_limits(self):
         datastore = get_datastore_contract(self.config)

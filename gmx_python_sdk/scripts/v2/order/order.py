@@ -122,6 +122,7 @@ class Order:
                 raise Exception("Transaction failed!")
 
             self.log.info("Transaction submitted!")
+            return tx_hash.hex()
 
     def _get_prices(
         self, decimals: float, prices: float, is_open: bool = False,
@@ -415,7 +416,7 @@ class Order:
             ]
 
         print("submitting transaction")
-        self._submit_transaction(
+        return self._submit_transaction(
             user_wallet_address, value_amount, multicall_args, self._gas_limits
         )
 
