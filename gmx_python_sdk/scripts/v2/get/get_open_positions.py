@@ -148,11 +148,13 @@ class GetOpenPositions(GetData):
             processed_positions.append(processed_position)
         prices = []
         for position in processed_positions:
+            print(position['short_token_min_price'],
+                  position['short_token_max_price'])
             price = (
                 (position['minPrice'], position['maxPrice']),
                 (position['minPrice'], position['maxPrice']),
-                (int(position['short_token_min_price']),
-                 int(position['short_token_max_price']))
+                (position['short_token_min_price'],
+                 position['short_token_max_price'])
             )
             prices.append(price)
         keys = []
@@ -224,10 +226,31 @@ class GetOpenPositions(GetData):
         ) / 10 ** (
             30 - chain_tokens[market_info['index_token_address']]['decimals']
         )
-        long_token_min_price = int(
-            prices[market_info['long_token_address']]['minPriceFull'])
-        long_token_max_price = int(
-            prices[market_info['long_token_address']]['maxPriceFull'])
+        long_token_mark_price = np.median(
+            [
+                float(
+                    prices[market_info['long_token_address']]['maxPriceFull']
+                ),
+                float(
+                    prices[market_info['long_token_address']]['minPriceFull']
+                )
+            ]
+        ) / 10 ** (
+            30 - chain_tokens[market_info['long_token_address']]['decimals']
+        )
+        short_token_mark_price = np.median(
+            [
+                float(
+                    prices[market_info['short_token_address']]['maxPriceFull']
+                ),
+                float(
+                    prices[market_info['short_token_address']]['minPriceFull']
+                )
+            ]
+        ) / 10 ** (
+            30 - chain_tokens[market_info['short_token_address']]['decimals']
+        )
+
         short_token_min_price = int(
             prices[market_info['short_token_address']]['minPriceFull'])
 
@@ -248,26 +271,6 @@ class GetOpenPositions(GetData):
             30 - chain_tokens[chain_tokens[raw_position[0][2]]
                               ['address']]['decimals']
         )
-        long_token_mark_price = np.median(
-            [
-                float(prices[market_info['long_token_address']]
-                      ['maxPriceFull']),
-                float(prices[market_info['long_token_address']]
-                      ['minPriceFull'])
-            ]
-        ) / 10 ** (
-            30 - market_info['long_token_metadata']['decimals']
-        )
-        short_token_mark_price = np.median(
-            [
-                float(prices[market_info['short_token_address']]
-                      ['maxPriceFull']),
-                float(prices[market_info['short_token_address']]
-                      ['minPriceFull'])
-            ]
-        ) / 10 ** (
-            30 - market_info['short_token_metadata']['decimals']
-        )
         initial_collateral_amount_usd = raw_position[1][2] / \
             10 ** chain_tokens[raw_position[0][2]
                                ]['decimals'] * collateral_mark_price
@@ -282,8 +285,8 @@ class GetOpenPositions(GetData):
             "collateral_token_address": chain_tokens[raw_position[0][2]]['address'],
             "collateral_token": chain_tokens[raw_position[0][2]]['symbol'],
             "collateral_token_decimals": chain_tokens[raw_position[0][2]]['decimals'],
-            "long_token_decimals": market_info['long_token_metadata']['decimals'],
             "short_token_decimals": market_info['short_token_metadata']['decimals'],
+            "long_token_decimals": market_info['long_token_metadata']['decimals'],
             "collateral_token_price": collateral_mark_price,
             "index_token_decimals": chain_tokens[market_info['index_token_address']]['decimals'],
             "position_size": raw_position[1][0] / 10**30,
@@ -314,11 +317,9 @@ class GetOpenPositions(GetData):
             "mark_price": mark_price,
             "maxPrice": int(maxPrice),
             "minPrice": int(minPrice),
-            "long_token_min_price": long_token_min_price / 10 ** market_info['long_token_metadata']['decimals'],
-            "long_token_max_price": long_token_max_price / 10 ** market_info['long_token_metadata']['decimals'],
+            "short_token_min_price": short_token_min_price,
+            "short_token_max_price": short_token_max_price,
             "long_token_mark_price": long_token_mark_price,
-            "short_token_min_price": short_token_min_price / 10 ** market_info['short_token_metadata']['decimals'],
-            "short_token_max_price": short_token_max_price / 10 ** market_info['short_token_metadata']['decimals'],
             "short_token_mark_price": short_token_mark_price,
             "long_token_name": market_info['long_token_metadata']['symbol'],
             "short_token_name": market_info['short_token_metadata']['symbol'],
