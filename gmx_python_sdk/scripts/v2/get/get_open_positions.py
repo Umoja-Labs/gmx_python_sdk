@@ -23,7 +23,7 @@ class GetOpenPositions(GetData):
         self.referral_storage_address = str(
             convert_to_checksum_address(config, referral_storage_address))
 
-    def transform_to_dict(self, account_positions_list, processed_positions, market_info):
+    def transform_to_dict(self, account_positions_list, processed_positions):
         result = []
         for i in range(len(account_positions_list)):
             pos = account_positions_list[i]
@@ -99,7 +99,6 @@ class GetOpenPositions(GetData):
             print(float(ppos['inital_collateral_amount_usd']), float(base_pnl_usd) / 10 **
                   30, float(fees[2][0]) / 10 ** 30, float(fundingFeeAmount), close_fee_in_usd)
             position_dict.update(ppos)
-            print(market_info)
             result.append(position_dict)
         return result
 
@@ -168,8 +167,7 @@ class GetOpenPositions(GetData):
             self.data_store_contract_address, self.referral_storage_address, keys, prices, ZERO_ADDRESS).call()
         print(positionInfos)
 
-        market_info = self.markets.info[raw_position[0][1]]
-        return self.transform_to_dict(positionInfos, processed_positions, market_info)
+        return self.transform_to_dict(positionInfos, processed_positions)
 
         # key = "{}_{}".format(
         #    processed_position['market_symbol'][0],
