@@ -29,6 +29,7 @@ web3 = ">= 6.10.0"
 pyyaml = ">= 6.0.1"
 pandas = ">= 1.4.2"
 numerize = ">= 0.12"
+tqdm = ">= 4.4.0"
 
 [build-system]
 requires = ["poetry-core"]

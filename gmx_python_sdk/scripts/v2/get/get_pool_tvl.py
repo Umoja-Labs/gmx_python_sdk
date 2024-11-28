@@ -8,6 +8,8 @@ from ..gmx_utils import (
     make_timestamped_dataframe, save_csv_to_datastore
 )
 
+import tqdm
+
 
 class GetPoolTVL:
     def __init__(self, config: str):
@@ -36,7 +38,7 @@ class GetPoolTVL:
         """
         markets = Markets(self.config).get_available_markets()
         pool_tvl_dict = {}
-        for market in markets:
+        for market in tqdm.tqdm(markets, desc="Getting Pool TVL"):
             index_token_address = markets[market]['index_token_address']
             long_token_metadata = markets[market]['long_token_metadata']
             short_token_metadata = markets[market]['short_token_metadata']
@@ -70,33 +72,32 @@ class GetPoolTVL:
             )
             short_usd_balance = short_token_balance
 
-            dictionary_key = markets[market]['market_symbol']
-
-            pool_tvl_dict[dictionary_key] = {
+            pool_tvl_dict[market] = {
+                "market_symbol": markets[market]['market_symbol'],
                 "total_tvl": {},
                 "long_token": {},
                 "short_token": {}
             }
 
-            pool_tvl_dict[dictionary_key]['total_tvl'] = (
-                long_usd_balance + short_usd_balance
+            pool_tvl_dict[market]['total_tvl'] = (
+                    long_usd_balance + short_usd_balance
             )
-            pool_tvl_dict[dictionary_key]['long_token'] = (
+            pool_tvl_dict[market]['long_token'] = (
                 markets[market]['long_token_address']
             )
-            pool_tvl_dict[dictionary_key]['short_token'] = (
+            pool_tvl_dict[market]['short_token'] = (
                 markets[market]['short_token_address']
             )
-            pool_tvl_dict[dictionary_key]['long_token_balance'] = (
+            pool_tvl_dict[market]['long_token_balance'] = (
                 long_token_balance
             )
-            pool_tvl_dict[dictionary_key]['short_token_balance'] = (
+            pool_tvl_dict[market]['short_token_balance'] = (
                 short_token_balance
             )
-            pool_tvl_dict[dictionary_key]['long_token_usd_balance'] = (
+            pool_tvl_dict[market]['long_token_usd_balance'] = (
                 long_usd_balance
             )
-            pool_tvl_dict[dictionary_key]['short_token_usd_balance'] = (
+            pool_tvl_dict[market]['short_token_usd_balance'] = (
                 short_usd_balance
             )
 
