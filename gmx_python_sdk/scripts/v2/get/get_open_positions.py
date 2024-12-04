@@ -164,7 +164,7 @@ class GetOpenPositions(GetData):
         print('bbbb', self.data_store_contract_address,
               self.referral_storage_address, keys, prices, ZERO_ADDRESS)
         positionInfos = self.reader_contract.functions.getAccountPositionInfoList(
-            self.data_store_contract_address, self.referral_storage_address, keys, prices, ZERO_ADDRESS).call()
+            self.data_store_contract_address, self.referral_storage_address, self.address, keys, prices, ZERO_ADDRESS, 0, 30).call()
         print(positionInfos)
 
         return self.transform_to_dict(positionInfos, processed_positions)
