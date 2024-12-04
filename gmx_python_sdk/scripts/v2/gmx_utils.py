@@ -53,7 +53,7 @@ contract_map = {
         },
         "exchangerouter":
         {
-            "contract_address": "0x69C527fC77291722b52649E45c838e41be8Bf5d5",
+            "contract_address": "0x900173A66dbD345006C51fA35fA3aB760FcD843b",
             "abi_path": "contracts/arbitrum/exchangerouter.json"
         },
         "depositvault":
@@ -73,7 +73,7 @@ contract_map = {
         },
         "syntheticsreader":
         {
-            "contract_address": "0x5Ca84c34a381434786738735265b9f3FD814b824",
+            "contract_address": "0x0537C767cDAC0726c76Bb89e92904fe28fd02fE1",
             "abi_path": "contracts/arbitrum/syntheticsreader.json"
         },
         "syntheticsrouter":
