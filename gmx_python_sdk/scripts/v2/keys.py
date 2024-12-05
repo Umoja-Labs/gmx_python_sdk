@@ -2,19 +2,24 @@ from .gmx_utils import create_hash_string, create_hash, get_datastore_contract
 
 ACCOUNT_POSITION_LIST = create_hash_string("ACCOUNT_POSITION_LIST")
 CLAIMABLE_FEE_AMOUNT = create_hash_string("CLAIMABLE_FEE_AMOUNT")
+CLAIMABLE_FUNDING_AMOUNT = create_hash_string("CLAIMABLE_FUNDING_AMOUNT")
 DECREASE_ORDER_GAS_LIMIT = create_hash_string("DECREASE_ORDER_GAS_LIMIT")
 DEPOSIT_GAS_LIMIT = create_hash_string("DEPOSIT_GAS_LIMIT")
 
 WITHDRAWAL_GAS_LIMIT = create_hash_string("WITHDRAWAL_GAS_LIMIT")
 
-EXECUTION_GAS_FEE_BASE_AMOUNT = create_hash_string("EXECUTION_GAS_FEE_BASE_AMOUNT")
-EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = create_hash_string("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR")
+EXECUTION_GAS_FEE_BASE_AMOUNT = create_hash_string(
+    "EXECUTION_GAS_FEE_BASE_AMOUNT")
+EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = create_hash_string(
+    "EXECUTION_GAS_FEE_MULTIPLIER_FACTOR")
 INCREASE_ORDER_GAS_LIMIT = create_hash_string("INCREASE_ORDER_GAS_LIMIT")
 MAX_OPEN_INTEREST = create_hash_string("MAX_OPEN_INTEREST")
 MAX_PNL_FACTOR_FOR_TRADERS = create_hash_string("MAX_PNL_FACTOR_FOR_TRADERS")
 MAX_PNL_FACTOR_FOR_DEPOSITS = create_hash_string("MAX_PNL_FACTOR_FOR_DEPOSITS")
-MAX_PNL_FACTOR_FOR_WITHDRAWALS = create_hash_string("MAX_PNL_FACTOR_FOR_WITHDRAWALS")
-MIN_ADDITIONAL_GAS_FOR_EXECUTION = create_hash_string("MIN_ADDITIONAL_GAS_FOR_EXECUTION")
+MAX_PNL_FACTOR_FOR_WITHDRAWALS = create_hash_string(
+    "MAX_PNL_FACTOR_FOR_WITHDRAWALS")
+MIN_ADDITIONAL_GAS_FOR_EXECUTION = create_hash_string(
+    "MIN_ADDITIONAL_GAS_FOR_EXECUTION")
 OPEN_INTEREST_IN_TOKENS = create_hash_string("OPEN_INTEREST_IN_TOKENS")
 OPEN_INTEREST = create_hash_string("OPEN_INTEREST")
 OPEN_INTEREST_RESERVE_FACTOR = create_hash_string(
@@ -38,6 +43,13 @@ def claimable_fee_amount_key(market: str, token: str):
     return create_hash(
         ["bytes32", "address", "address"],
         [CLAIMABLE_FEE_AMOUNT, market, token]
+    )
+
+
+def claimable_funding_amount_key(market: str, token: str, account: str):
+    return create_hash(
+        ["bytes32", "address", "address", "address"],
+        [CLAIMABLE_FUNDING_AMOUNT, market, token, account]
     )
 
 

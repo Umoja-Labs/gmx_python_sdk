@@ -5,12 +5,13 @@ from numerize import numerize
 from .get import GetData
 from .get_oracle_prices import OraclePrices
 from ..gmx_utils import execute_threading
-from ..keys import get_datastore_contract, claimable_fee_amount_key
+from ..keys import get_datastore_contract, claimable_funding_amount_key
 
 
 class GetClaimableFees(GetData):
     def __init__(self, config: str):
         super().__init__(config)
+        self.account_address = config.user_wallet_address
 
     def _get_data_processing(self):
         """
@@ -23,47 +24,76 @@ class GetClaimableFees(GetData):
 
         """
         total_fees = 0
+        market_keys = []
+        long_token_addresses = []
+        short_token_addresses = []
         long_output_list = []
         short_output_list = []
         long_precision_list = []
+        short_precision_list = []
         long_token_price_list = []
+        short_token_price_list = []
         mapper = []
+        result = {}
 
         for market_key in self.markets.info:
             self._filter_swap_markets()
             self._get_token_addresses(market_key)
             market_symbol = self.markets.get_market_symbol(market_key)
+            market_keys.append(market_key)
             long_decimal_factor = self.markets.get_decimal_factor(
                 market_key=market_key,
                 long=True,
                 short=False
             )
-            long_precision = 10**(long_decimal_factor - 1)
-            oracle_precision = 10**(30 - long_decimal_factor)
+            long_precision = 10**(long_decimal_factor)
+            short_decimal_factor = self.markets.get_decimal_factor(
+                market_key=market_key,
+                long=False,
+                short=True
+            )
+            short_precision = 10**(short_decimal_factor)
+
+            long_oracle_precision = 10**(30 - long_decimal_factor)
+            short_oracle_precision = 10**(30 - short_decimal_factor)
 
             # uncalled web3 object for long fees
-            long_output = self._get_claimable_fee_amount(
+            long_output = self._get_claimable_funding_amount(
                 market_key,
                 self._long_token_address
             )
 
             prices = OraclePrices(chain=self.config.chain).get_recent_prices()
+            long_token_addresses.append(self._long_token_address)
+            short_token_addresses.append(self._short_token_address)
             long_token_price = np.median(
                 [
                     float(
                         prices[self._long_token_address]['maxPriceFull']
-                    ) / oracle_precision,
+                    ) / long_oracle_precision,
                     float(
                         prices[self._long_token_address]['minPriceFull']
-                    ) / oracle_precision
+                    ) / long_oracle_precision
+                ]
+            )
+            short_token_price = np.median(
+                [
+                    float(
+                        prices[self._short_token_address]['maxPriceFull']
+                    ) / short_oracle_precision,
+                    float(
+                        prices[self._short_token_address]['minPriceFull']
+                    ) / short_oracle_precision
                 ]
             )
 
             long_token_price_list.append(long_token_price)
             long_precision_list.append(long_precision)
+            short_token_price_list.append(short_token_price)
+            short_precision_list.append(short_precision)
 
             # uncalled web3 object for short fees
-            short_output = self._get_claimable_fee_amount(
+            short_output = self._get_claimable_funding_amount(
                 market_key,
                 self._short_token_address
             )
@@ -78,28 +108,56 @@ class GetClaimableFees(GetData):
         # feed the uncalled web3 objects into threading function
         long_threaded_output = execute_threading(long_output_list)
         short_threaded_output = execute_threading(short_output_list)
+        print(
+            len(market_keys),
+            len(long_token_addresses),
+            len(short_token_addresses),
+            len(long_threaded_output),
+            len(short_threaded_output),
+            len(long_precision_list),
+            len(short_precision_list),
+            len(long_token_price_list),
+            len(short_token_price_list),
+            len(mapper)
+        )
 
         for (
+            market_key,
+            long_token_address,
+            short_token_address,
             long_claimable_fees,
             short_claimable_fees,
             long_precision,
+            short_precision,
             long_token_price,
+            short_token_price,
             token_symbol
         ) in zip(
+            market_keys,
+            long_token_addresses,
+            short_token_addresses,
             long_threaded_output,
             short_threaded_output,
             long_precision_list,
+            short_precision_list,
             long_token_price_list,
+            short_token_price_list,
             mapper
         ):
             # convert raw outputs into USD value
             long_claimable_usd = (
                 long_claimable_fees / long_precision
             ) * long_token_price
+            print(111, long_claimable_fees / long_precision)
+            result[market_key] = {
+                'long_claimable_amount': long_claimable_fees / long_precision,
+                'long_token_address': long_token_address,
+                'short_claimable_amount': short_claimable_fees / short_precision,
+                'short_token_address': short_token_address,
+            }
 
-            # TODO - currently all short fees are collected in USDC which is
-            # 6 decimals
-            short_claimable_usd = short_claimable_fees / (10 ** 6)
+            short_claimable_usd = short_claimable_fees / short_precision
+            print(222, short_claimable_fees / short_precision)
 
             self.log.info(f"Token: {token_symbol}")
 
@@ -115,14 +173,13 @@ class GetClaimableFees(GetData):
 
             total_fees += long_claimable_usd + short_claimable_usd
 
-        return {'latest_total_fees': total_fees}
+        return result
 
-    def _get_claimable_fee_amount(
+    def _get_claimable_funding_amount(
         self, market_address: str, token_address: str
     ):
         """
-        For a given market and long/short side of the pool get the raw output
-        for pending fees
+        get the claimable funding amount for a given market and token
 
         Parameters
         ----------
@@ -141,9 +198,10 @@ class GetClaimableFees(GetData):
         datastore = get_datastore_contract(self.config)
 
         # create hashed key to query the datastore
-        claimable_fees_amount_hash_data = claimable_fee_amount_key(
+        claimable_fees_amount_hash_data = claimable_funding_amount_key(
             market_address,
-            token_address
+            token_address,
+            self.account_address
         )
 
         claimable_fee = datastore.functions.getUint(
