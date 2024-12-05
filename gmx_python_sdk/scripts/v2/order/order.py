@@ -360,7 +360,7 @@ class Order:
 
         auto_cancel = self.auto_cancel
 
-        now = int(datetime.now().timestamp())
+        start_trade_from = 0
         arguments = (
             (
                 user_wallet_address,
@@ -379,7 +379,7 @@ class Order:
                 execution_fee,
                 callback_gas_limit,
                 int(min_output_amount),
-                now - 1
+                start_trade_from
             ),
             order_type,
             decrease_position_swap_type,
