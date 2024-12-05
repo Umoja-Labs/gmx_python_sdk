@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from datetime import datetime
 
 from hexbytes import HexBytes
 from web3 import Web3
@@ -359,6 +360,7 @@ class Order:
 
         auto_cancel = self.auto_cancel
 
+        now = datetime.now().timestamp()
         arguments = (
             (
                 user_wallet_address,
@@ -376,7 +378,8 @@ class Order:
                 acceptable_price,
                 execution_fee,
                 callback_gas_limit,
-                int(min_output_amount)
+                int(min_output_amount),
+                now - 1
             ),
             order_type,
             decrease_position_swap_type,
