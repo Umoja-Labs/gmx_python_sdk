@@ -360,7 +360,7 @@ class Order:
 
         auto_cancel = self.auto_cancel
 
-        now = datetime.now().timestamp()
+        now = int(datetime.now().timestamp())
         arguments = (
             (
                 user_wallet_address,
