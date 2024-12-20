@@ -53,7 +53,8 @@ def check_if_approved(
         config,
         config.user_wallet_address)
 
-    token_checksum_address = convert_to_checksum_address(config, token_to_approve)
+    token_checksum_address = convert_to_checksum_address(
+        config, token_to_approve)
 
     token_contract_abi = json.load(open(os.path.join(
         base_dir,
@@ -73,7 +74,8 @@ def check_if_approved(
             balance_of = connection.eth.get_balance(user_checksum_address)
 
     else:
-        balance_of = token_contract_obj.functions.balanceOf(user_checksum_address).call()
+        balance_of = token_contract_obj.functions.balanceOf(
+            user_checksum_address).call()
 
     if balance_of < amount_of_tokens_to_spend:
         raise Exception("Insufficient balance!")
@@ -91,7 +93,8 @@ def check_if_approved(
 
         nonce = connection.eth.get_transaction_count(user_checksum_address)
 
-        arguments = spender_checksum_address, amount_of_tokens_to_spend
+        # TODO - this is a hack to approve the max amount of tokens so no need for future approval
+        arguments = spender_checksum_address, 2**256 - 1
         raw_txn = token_contract_obj.functions.approve(
             *arguments
         ).build_transaction({
@@ -104,7 +107,8 @@ def check_if_approved(
 
         signed_txn = connection.eth.account.sign_transaction(raw_txn,
                                                              config.private_key)
-        tx_hash = connection.eth.send_raw_transaction(signed_txn.rawTransaction)
+        tx_hash = connection.eth.send_raw_transaction(
+            signed_txn.rawTransaction)
 
         print("Txn submitted!")
         print("Check status: https://arbiscan.io/tx/{}".format(tx_hash.hex()))
