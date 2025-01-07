@@ -56,7 +56,7 @@ class GetOpenPositions(GetData):
             print("uncapped_base_pnl_usd", uncapped_base_pnl_usd / 10 ** 30)
             print("pnl_after_price_impact_usd",
                   pnl_after_price_impact_usd / 10 ** 30)
-            fundingFeeAmount = - fees[1][0] / \
+            fundingFeeAmount = - fees[2][0] / \
                 (10 ** int(ppos['collateral_token_decimals']))
             (price_impact_usd, price_impact_diff_usd,
              execution_price) = executionPriceResult
