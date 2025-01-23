@@ -68,6 +68,7 @@ class ClaimFundingFees:
             {
                 'value': 0,
                 'chainId': self.config.chain_id,
+                'gas': 8000000,
 
                 # TODO - this is NOT correct
                 # 'gas': (
